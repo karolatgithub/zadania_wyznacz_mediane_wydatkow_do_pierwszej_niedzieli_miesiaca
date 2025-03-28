@@ -46,29 +46,35 @@ const swap = (a, i, j) => {
     a[j] = temp;
 }
 
-const getRandomPivot = (low, high) => {
-    return Math.floor(Math.random() * (high - low + 1)) + low;
+const partitionHigh = (a, low, high) => {
+    const pivot = a[high];
+    let i = low;
+    for(let j = low; j < high; j++){
+        if(a[j] <= pivot){      
+            swap(a, i, j);
+            i++;
+        }
+    }
+    swap(a, i, high);
+    return i;
 }
 
-const quickSortRecursive = (a, low=0, high=a.length-1) => {
-    if (low < high) {
-        const pivotIndex = getRandomPivot(low, high);
-        const pivotValue = a[pivotIndex];
-        swap(a, pivotIndex, high);
-        let i = low - 1;
-        for (let j = low; j < high; j++) {
-            if (a[j] < pivotValue) {
-                i++;
-                swap(a, i, j);
-            }
+const iterativeQuickSort = (a, start=0, end=a.length-1) => {
+    const stack = [{x: start, y: end}];
+    while(stack.length){
+        const range = stack.pop();
+        const x=range.x, y=range.y;
+        const p = partitionHigh(a, x, y);
+        if(p - 1 > x){
+            stack.push({x: x, y: p - 1});
         }
-        swap(a, i + 1, high);
-        quickSortRecursive(a, low, i);
-        quickSortRecursive(a, i + 2, high);
+        if(p + 1 < y){
+            stack.push({x: p + 1, y: y});
+        }
     }
 }
 
-const solution1 = (expenses) => {
+const solutionBySortImplementation = (expenses, sortImplementation) => {
     let result = null;
     let expensesByMonths=[];
     for(let month in expenses) {
@@ -94,7 +100,7 @@ const solution1 = (expenses) => {
         }
     }
     if(expensesByMonths.length>0) {
-        quickSortRecursive(expensesByMonths);
+        sortImplementation(expensesByMonths);
         //console.log(expensesByMonths);
         const remainder=expensesByMonths.length % 2;
         if(remainder != 0) {
@@ -111,43 +117,18 @@ const numericComparator = (a, b) => {
     return a-b;
 }
 
+const solution1 = (expenses) => {
+    return solutionBySortImplementation(expenses, function(a) {
+        iterativeQuickSort(a);
+        //console.log('quickSortIterative');
+        //console.log(a);
+    });
+}
+
 const solution2 = (expenses) => {
-    let result = null;
-    let expensesByMonths=[];
-    for(let month in expenses) {
-        let firstSunday=getFirstSunday(month);
-        if(!firstSunday) {
-            continue;
-        }
-        //console.log("firstSunday:"+firstSunday);
-        let expensesByMonth=[];
-        for(let day in expenses[month]) {
-            if(month+'-'+day>firstSunday) {
-                continue;
-            }
-            for(let kind in expenses[month][day]) {
-                if('food,fuel'.indexOf(kind)>=0
-                    && expenses[month][day][kind] instanceof Array) {
-                    for(let expense of expenses[month][day][kind]) {
-                         if(typeof expense === 'number') {
-                              expensesByMonths.push(expense);
-                         }
-                    }
-                }
-            }
-        }
-    }
-    if(expensesByMonths.length>0) {
-        quickSortRecursive(expensesByMonths);
-        //console.log(expensesByMonths);
-        const remainder=expensesByMonths.length % 2;
-        if(remainder != 0) {
-            result=expensesByMonths[(expensesByMonths.length-remainder)/2];
-        } else {
-            let i = expensesByMonths.length/2;
-            result=(expensesByMonths[i-1]+expensesByMonths[i])/2;
-        }
-    }
-    //console.log(result);
-    return result;
+    return solutionBySortImplementation(expenses, function(a) {
+        a.sort(numericComparator);
+        //console.log('sort');
+        //console.log(a);
+    });
 }
