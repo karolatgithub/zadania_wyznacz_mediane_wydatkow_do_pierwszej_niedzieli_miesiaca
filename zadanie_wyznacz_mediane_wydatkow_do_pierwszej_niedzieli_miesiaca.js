@@ -74,6 +74,95 @@ const iterativeQuickSort = (a, start=0, end=a.length-1) => {
     }
 }
 
+const partition = (a, low, high) => { 
+    let pivot = a[high]; 
+    let i = (low - 1); 
+    for (let j = low; j <= high - 1; j++) { 
+        if (a[j] <= pivot) { 
+            i++; 
+            swap(a, i, j);
+        } 
+    } 
+    swap(a, i + 1, high);
+    return (i + 1); 
+} 
+       
+const kthSmallest = (a, left=0, right=a.length-1) => {
+    const r=right-left;
+    const k = (r -(r % 2))>>1;
+    while (left <= right) { 
+        let pivotIndex = partition(a, left, right); 
+        if (pivotIndex == k - 1) {
+            return a[pivotIndex]; 
+        } else if (pivotIndex > k - 1) {
+            right = pivotIndex - 1; 
+        } else {
+            left = pivotIndex + 1; 
+        } 
+    } 
+    return -1; 
+}
+
+const quicksortRecurrency = (a, left=0, right=a.length-1, k=[0], first=true) => {
+    ++k[0];
+    let i = left, j = right;
+    const pivot = a[(left + right - ((left + right) % 2)) / 2];
+    do {
+        while (a[i] < pivot && i < right) i++;
+        while (a[j] > pivot && j > left) j--;
+        if (i <= j) {
+             swap(a, i, j);
+             i++;
+             j--;
+        }
+     } while (i <= j);
+     if (left < j) quicksortRecurrency(a, left, j, k, false);
+     if (i < right) quicksortRecurrency(a, i, right, k, false);
+     if(first) {
+        console.log(k[0]);
+     }
+}
+
+const insertionSort = (a) => {
+    for (let i = 1; i < a.length; i++) {
+        const key = a[i];
+        let j = i - 1;
+        while (j >= 0 && a[j] > key) {
+            a[j + 1] = a[j];
+            j = j - 1;
+        }
+        a[j + 1] = key;
+    }
+}
+
+const heapify = (a, n, i) => {
+    let largest = i;
+    const d=i<<1;
+    let l = d + 1; 
+    let r = d + 2; 
+    if (l < n && a[l] > a[largest]) {
+        largest = l;
+    }
+    if (r < n && a[r] > a[largest]) {
+        largest = r;
+    }
+    if (largest !== i) {
+        swap(a, i, largest);
+        heapify(a, n, largest);
+    }
+}
+
+const heapSort = (a) => {
+    let n = a.length;
+    for (let i = ((n - (n % 2))>>1) - 1; i >= 0; i--) {
+        heapify(a, n, i);
+    }
+    for (let i = n - 1; i > 0; i--) {
+        swap(a,0,i);
+        heapify(a, i, 0);
+    }
+}
+
 const solutionBySortImplementation = (expenses, sortImplementation) => {
     let result = null;
     let expensesByMonths=[];
@@ -119,7 +208,7 @@ const numericComparator = (a, b) => {
 
 const solution1 = (expenses) => {
     return solutionBySortImplementation(expenses, function(a) {
-        iterativeQuickSort(a);
+        heapSort(a);
         //console.log('quickSortIterative');
         //console.log(a);
     });
