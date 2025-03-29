@@ -135,7 +135,7 @@ const insertionSort = (a) => {
     }
 }
 
-const heapify = (a, n, i) => {
+const heapifyRecurrency = (a, n, i) => {
     let largest = i;
     const d=i<<1;
     let l = d + 1; 
@@ -148,18 +148,58 @@ const heapify = (a, n, i) => {
     }
     if (largest !== i) {
         swap(a, i, largest);
-        heapify(a, n, largest);
+        heapifyRecurrency(a, n, largest);
     }
 }
 
-const heapSort = (a) => {
+const heapSortRecurrency = (a) => {
     let n = a.length;
     for (let i = ((n - (n % 2))>>1) - 1; i >= 0; i--) {
-        heapify(a, n, i);
+        heapifyRecurrency(a, n, i);
     }
     for (let i = n - 1; i > 0; i--) {
         swap(a,0,i);
-        heapify(a, i, 0);
+        heapifyRecurrency(a, i, 0);
+    }
+}
+
+const heapifyIterative = (a, heapSize, k) => {
+    while (true) {
+        let smallest = k;
+        const q = k<<1;
+        const l = q + 1;
+        const r = q + 2;
+        if (l < heapSize && a[l] < a[k]) {
+            smallest = l;
+        } else {
+            smallest = k;
+        }
+        if (r < heapSize && a[r] < a[smallest]) {
+            smallest = r;
+        }
+        if (smallest != k) {
+            swap(a, k, smallest);
+            k = smallest;
+        } else {
+            return;
+        }
+    }
+}
+
+const buildHeapIterative = (a) => {
+    const q = a.length - 2;
+    const o = (q - (q%2)) >> 1;
+    for (let k=o; k>=-1; k--) {
+        heapifyIterative(a, a.length, k);
+    }
+}
+
+const heapSortIterative = (a) => {
+    buildHeapIterative(a);
+    let heapSize = a.length;
+    for (let i=a.length-1; i>=0; i--) {
+        swap(a, 0, --heapSize);
+        heapifyIterative(a, heapSize, 0);
     }
 }
 
@@ -208,7 +248,8 @@ const numericComparator = (a, b) => {
 
 const solution1 = (expenses) => {
     return solutionBySortImplementation(expenses, function(a) {
-        heapSort(a);
+        //heapSortRecurrency(a);
+        heapSortIterative(a);
         //console.log('quickSortIterative');
         //console.log(a);
     });
