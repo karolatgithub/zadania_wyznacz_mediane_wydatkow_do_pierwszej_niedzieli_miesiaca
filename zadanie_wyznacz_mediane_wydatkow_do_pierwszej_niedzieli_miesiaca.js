@@ -41,9 +41,21 @@ const getFirstSunday = (month) => {
 }
 
 const swap = (a, i, j) => {
-    const temp = a[i];
-    a[i] = a[j];
-    a[j] = temp;
+    [a[i],a[j]] = [a[j],a[i]];
+}
+
+const iterativeQuickSort = (a) => {
+    const stack = [{x: 0, y: a.length-1}];
+    while(stack.length){
+        const range = stack.pop();
+        const p = partitionHigh(a, range.x, range.y);
+        if(p - 1 > range.x){
+            stack.push({x: range.x, y: p - 1});
+        }
+        if(p + 1 < range.y){
+            stack.push({x: p + 1, y: range.y});
+        }
+    }
 }
 
 const partitionHigh = (a, low, high) => {
@@ -51,47 +63,18 @@ const partitionHigh = (a, low, high) => {
     let i = low;
     for(let j = low; j < high; j++){
         if(a[j] <= pivot){      
-            swap(a, i, j);
-            i++;
+            swap(a, i++, j);
         }
     }
     swap(a, i, high);
     return i;
 }
 
-const iterativeQuickSort = (a, start=0, end=a.length-1) => {
-    const stack = [{x: start, y: end}];
-    while(stack.length){
-        const range = stack.pop();
-        const x=range.x, y=range.y;
-        const p = partitionHigh(a, x, y);
-        if(p - 1 > x){
-            stack.push({x: x, y: p - 1});
-        }
-        if(p + 1 < y){
-            stack.push({x: p + 1, y: y});
-        }
-    }
-}
-
-const partition = (a, low, high) => { 
-    let pivot = a[high]; 
-    let i = (low - 1); 
-    for (let j = low; j <= high - 1; j++) { 
-        if (a[j] <= pivot) { 
-            i++; 
-            swap(a, i, j);
-        } 
-    } 
-    swap(a, i + 1, high);
-    return (i + 1); 
-} 
-       
 const kthSmallest = (a, left=0, right=a.length-1) => {
     const r=right-left;
     const k = (r -(r % 2))>>1;
     while (left <= right) { 
-        let pivotIndex = partition(a, left, right); 
+        let pivotIndex = partitionHigh(a, left, right); 
         if (pivotIndex == k - 1) {
             return a[pivotIndex]; 
         } else if (pivotIndex > k - 1) {
@@ -103,7 +86,7 @@ const kthSmallest = (a, left=0, right=a.length-1) => {
     return -1; 
 }
 
-const quicksortRecurrency = (a, left=0, right=a.length-1, k=[0], first=true) => {
+const quicksortRecursive = (a, left=0, right=a.length-1, k=[0], first=true) => {
     ++k[0];
     let i = left, j = right;
     const pivot = a[(left + right - ((left + right) % 2)) / 2];
@@ -116,8 +99,8 @@ const quicksortRecurrency = (a, left=0, right=a.length-1, k=[0], first=true) => 
              j--;
         }
      } while (i <= j);
-     if (left < j) quicksortRecurrency(a, left, j, k, false);
-     if (i < right) quicksortRecurrency(a, i, right, k, false);
+     if (left < j) quicksortRecursive(a, left, j, k, false);
+     if (i < right) quicksortRecursive(a, i, right, k, false);
      if(first) {
         console.log(k[0]);
      }
@@ -135,7 +118,7 @@ const insertionSort = (a) => {
     }
 }
 
-const heapifyRecurrency = (a, n, i) => {
+const heapifyRecursive = (a, n, i) => {
     let largest = i;
     const d=i<<1;
     let l = d + 1; 
@@ -148,18 +131,18 @@ const heapifyRecurrency = (a, n, i) => {
     }
     if (largest !== i) {
         swap(a, i, largest);
-        heapifyRecurrency(a, n, largest);
+        heapifyRecursive(a, n, largest);
     }
 }
 
-const heapSortRecurrency = (a) => {
+const heapSortRecursive = (a) => {
     let n = a.length;
     for (let i = ((n - (n % 2))>>1) - 1; i >= 0; i--) {
-        heapifyRecurrency(a, n, i);
+        heapifyRecursive(a, n, i);
     }
     for (let i = n - 1; i > 0; i--) {
         swap(a,0,i);
-        heapifyRecurrency(a, i, 0);
+        heapifyRecursive(a, i, 0);
     }
 }
 
@@ -206,19 +189,15 @@ const heapSortIterative = (a) => {
 const solutionBySortImplementation = (expenses, sortImplementation) => {
     let result = null;
     let expensesByMonths=[];
-    for(let month in expenses) {
-        let firstSunday=getFirstSunday(month);
-        if(!firstSunday) {
-            continue;
-        }
-        //console.log("firstSunday:"+firstSunday);
-        for(let day in expenses[month]) {
-            if(month+'-'+day>firstSunday) {
-                continue;
-            }
-            for(let kind in expenses[month][day]) {
-                if('food,fuel'.indexOf(kind)>=0
-                    && expenses[month][day][kind] instanceof Array) {
+    for (const [month, days] of Object.entries(expenses)) {
+        const firstSunday = getFirstSunday(month);
+        if (!firstSunday) continue;
+
+        for (const [day, categories] of Object.entries(days)) {
+            if (`${month}-${day}` > firstSunday) continue;
+
+            for (const [kind, amounts] of Object.entries(categories)) {
+                if (['food', 'fuel'].includes(kind) && Array.isArray(amounts)) {
                     for(let expense of expenses[month][day][kind]) {
                          if(typeof expense === 'number') {
                               expensesByMonths.push(expense);
@@ -248,9 +227,10 @@ const numericComparator = (a, b) => {
 
 const solution1 = (expenses) => {
     return solutionBySortImplementation(expenses, function(a) {
-        //heapSortRecurrency(a);
+        //heapSortRecursive(a);
+        //iterativeQuickSort(a);
+        //kthSmallest(a);
         heapSortIterative(a);
-        //console.log('quickSortIterative');
         //console.log(a);
     });
 }
