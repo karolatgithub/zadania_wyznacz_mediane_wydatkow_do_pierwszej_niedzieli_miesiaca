@@ -186,6 +186,83 @@ const heapSortIterative = (a) => {
     }
 }
 
+const MIN_MERGE = 32;
+  
+const minRunLength = (n) => {
+    let r = 0;
+    while (n >= MIN_MERGE) {
+        r |= (n & 1);
+        n >>= 1;
+    }
+    return n + r;
+}
+
+const insertionSort = (a,left,right) => {
+    let temp, j;
+    for(let i = left + 1; i <= right; i++) {
+        temp = a[i];
+        j = i - 1;
+        while (j >= left && a[j] > temp) {
+            a[j + 1] = a[j];
+            j--;
+        }
+        a[j + 1] = temp;
+    }
+}
+  
+const merge = (a, l, m, r) => {
+    const len1 = m - l + 1, len2 = r - m;
+    const left = new Array(len1);
+    const right = new Array(len2);
+    for(let x = 0; x < len1; x++) {
+        left[x] = a[l + x];
+    }
+    for(let x = 0; x < len2; x++) {
+        right[x] = a[m + 1 + x];
+    }
+    let i = 0;
+    let j = 0;
+    let k = l;
+    while (i < len1 && j < len2) {
+        if (left[i] <= right[j]) {
+            a[k] = left[i];
+            i++;
+        } else {
+            a[k] = right[j];
+            j++;
+        }
+        k++;
+    }
+    while (i < len1) {
+        a[k] = left[i];
+        k++;
+        i++;
+    }
+    while (j < len2) {
+        a[k] = right[j];
+        k++;
+        j++;
+    }
+}
+
+const timSort = (a, n=a.length) => {
+    const minRun = minRunLength(MIN_MERGE);
+    for(let i = 0; i < n; i += minRun) {
+        insertionSort(a, i, Math.min((i + MIN_MERGE - 1), (n - 1)));
+    }
+    let ss;
+    for(let size = minRun; size < n; size = ss) {
+        ss=size<<1;
+        for(let left = 0; left < n; left += ss) {
+            const mid = left + size - 1;
+            const right = Math.min((left + ss - 1), (n - 1));
+            if(mid < right) {
+                merge(a, left, mid, right);
+            }
+        }
+    }
+}
+
 const solutionBySortImplementation = (expenses, sortImplementation) => {
     let result = null;
     let expensesByMonths=[];
@@ -194,7 +271,7 @@ const solutionBySortImplementation = (expenses, sortImplementation) => {
         if (!firstSunday) continue;
 
         for (const [day, categories] of Object.entries(days)) {
-            if (`${month}-${day}` > firstSunday) continue;
+            if (month+'-'+day > firstSunday) continue;
 
             for (const [kind, amounts] of Object.entries(categories)) {
                 if (['food', 'fuel'].includes(kind) && Array.isArray(amounts)) {
